@@ -12,14 +12,13 @@ def split_tasks(args, n):
 def parallel_process(func, args, nprocs, bam=None, fasta=None):
     p = Pool(nprocs)
     if bam is not None and fasta is not None:
-        results = p.map(func, args, [bam]*len(args), [fasta]*len(args))
-    elif bam is not None and fasta is None:
-        results = p.map(func, args, [bam]*len(args))
-    elif bam is None and fasta is not None:
-        results = p.map(func, args, [fasta]*len(args))
+        return p.map(func, args, [bam]*len(args), [fasta]*len(args))
+    elif bam is not None:
+        return p.map(func, args, [bam]*len(args))
+    elif fasta is not None:
+        return p.map(func, args, [fasta]*len(args))
     else:
-        results = p.map(func, args)
-    return results
+        return p.map(func, args)
 
 def combine_batch_results(batch_results, data_type):
     all_results = None
@@ -41,7 +40,7 @@ def create_tmp_file(content):
         with os.fdopen(fd, 'w') as out:
             out.write(content)
     except:
-        sys.exit("can't generate temp file: {}".format(path))
+        sys.exit(f"can't generate temp file: {path}")
 
     return path
 
@@ -65,7 +64,7 @@ def merge_spans(spans):
 
 def complement_spans(spans):
     spans_merged = merge_spans(spans)
-    complement = []
-    for i in range(1, len(spans_merged)):
-        complement.append([spans[i-1][1] + 1, spans[i][0] - 1])
-    return complement
+    return [
+        [spans[i - 1][1] + 1, spans[i][0] - 1]
+        for i in range(1, len(spans_merged))
+    ]

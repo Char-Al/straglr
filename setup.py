@@ -1,7 +1,7 @@
 import os
 import sys
 from setuptools import setup, find_packages
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/src')
+sys.path.append(f'{os.path.dirname(os.path.abspath(__file__))}/src')
 from src import __version__
 setup(
     name='straglr',

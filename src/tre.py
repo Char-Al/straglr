@@ -25,7 +25,7 @@ class TREFinder:
         trf_path = spawn.find_executable("trf")
         if not trf_path:
             sys.exit('ABORT: {}'.format("can't find trf in PATH"))
-            
+
         self.trf_args = '2 5 5 80 10 10 500 -d -h'
         self.flank_len = 2000
 
@@ -58,24 +58,24 @@ class TREFinder:
         self.strict = False
 
         self.debug = debug
-        self.remove_tmps = True if not self.debug else False
+        self.remove_tmps = not self.debug
 
     def construct_trf_output(self, input_fasta):
         m = re.search('(\d[\d\s]*\d)', self.trf_args)
         if m is not None:
-            return '{}/{}.{}.dat'.format(os.getcwd(), os.path.basename(input_fasta), m.group(1).replace(' ', '.'))
+            return f"{os.getcwd()}/{os.path.basename(input_fasta)}.{m[1].replace(' ', '.')}.dat"
     
     def run_trf(self, input_fasta):
         cmd = ' '.join(['trf', input_fasta, self.trf_args])
         # redirect stdout and stderr to devnull
         FNULL = open(os.devnull, 'w')
         returncode = subprocess.call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
-        
+
         output = self.construct_trf_output(input_fasta)
         if os.path.exists(output):
             return output
         else:
-            sys.exit('cannot run {}'.format(cmd))
+            sys.exit(f'cannot run {cmd}')
 
     def type_trf_cols(self, cols):
         return list(map(int, cols[:3])) + [float(cols[3])] + list(map(int, cols[4:12])) + [float(cols[12])] + cols[13:]
@@ -124,7 +124,7 @@ class TREFinder:
         grouped_results = {}
         for seq in results.keys():
             read, read_type = seq.rsplit('.', 1)
-            if not read in grouped_results:
+            if read not in grouped_results:
                 grouped_results[read] = {}
             grouped_results[read][read_type] = results[seq]
 
@@ -165,16 +165,15 @@ class TREFinder:
                             all_pats[seq_id]['target'].add(result[13])
 
         same_pats = {}
-        for seq_id in all_pats.keys():
-            queries = set()
-            targets = set()
+        for seq_id in all_pats:
             if all_pats[seq_id]['query'] and all_pats[seq_id]['target']:
+                queries = set()
                 queries |= all_pats[seq_id]['query']
+                targets = set()
                 targets |= all_pats[seq_id]['target']
                 blastn_out = self.align_patterns(queries, targets, word_size=4)
                 if blastn_out and os.path.exists(blastn_out):
-                    results = self.parse_pat_blastn(blastn_out)
-                    if results:
+                    if results := self.parse_pat_blastn(blastn_out):
                         for query in results.keys():
                             same_pats[query] = results[query]
 
@@ -232,13 +231,18 @@ class TREFinder:
 
     def combine_trf_coords(self, coords, bounds, buf=20, max_sep=50):
         # screen out repeat completely in the flanks
-        coords = [c for c in coords if not (c[1] < bounds[0] - buf or c[0] > bounds[1] + buf)]
+        coords = [
+            c
+            for c in coords
+            if c[1] >= bounds[0] - buf and c[0] <= bounds[1] + buf
+        ]
+
         if not coords:
             return []
 
         merged_list = merge_spans(coords)
         gap_list = complement_spans(merged_list)
- 
+
         gaps_filled = []
         for i in range(len(merged_list)-1):
             if gap_list[i]:

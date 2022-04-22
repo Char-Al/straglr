@@ -63,21 +63,20 @@ class Variant:
     @classmethod
     def get_genotype(cls, variant):
         allele_counts = Counter([allele[-1] for allele in variant[3]])
-        gt = []
-        for allele in sorted([a for a in allele_counts.keys() if type(a) is not str], reverse=True) +\
-                             [a for a in allele_counts.keys() if type(a) is str]:
-            if allele == '-' and len(allele_counts.keys()) > 1:
-                continue
-            gt.append((allele, allele_counts[allele]))
-
-        return gt
+        return [
+            (allele, allele_counts[allele])
+            for allele in sorted(
+                [a for a in allele_counts.keys() if type(a) is not str],
+                reverse=True,
+            )
+            + [a for a in allele_counts.keys() if type(a) is str]
+            if allele != '-' or len(allele_counts.keys()) <= 1
+        ]
 
     @classmethod
     def summarize_genotype(cls, variant):
         gt = cls.get_genotype(variant)
-        out = []
-        for allele, support in gt:
-            out.append('{}({})'.format(allele, support))
+        out = [f'{allele}({support})' for allele, support in gt]
         variant[6] = ';'.join(out)
 
     @classmethod
@@ -101,10 +100,7 @@ class Variant:
                 reads = [a for a in variant[3] if a[7] == allele and a[4] - ref_size >= min_expansion]
                 n += len(reads)
 
-            if n >= min_reads:
-                return True
-            else:
-                return False
+            return n >= min_reads
         else:
             return False
 

@@ -28,8 +28,7 @@ def parse_args():
     parser.add_argument("--tmpdir", type=str, help="directory to use for generating tmp files instead of system TEMP")
     parser.add_argument("--debug", action='store_true', help="debug mode i.e. keep trf output")
     parser.add_argument("--version", action='version', version=__version__)
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 def main():
     args = parse_args()
@@ -64,11 +63,7 @@ def main():
                                max_cov=args.max_cov,
                                debug=args.debug,
                                )
-        # find ins
-        ins = ins_finder.find_ins(regions_bed_file=args.regions)
-
-        # find ins that are str
-        if ins:
+        if ins := ins_finder.find_ins(regions_bed_file=args.regions):
             variants = tre_finder.examine_ins(ins, min_expansion=args.min_ins_size)
 
     else:
@@ -76,8 +71,10 @@ def main():
         variants = tre_finder.genotype(args.loci)
 
     # output both bed and tsv
-    tre_finder.output_bed(variants, '{}.bed'.format(args.out_prefix))
-    tre_finder.output_tsv(variants, '{}.tsv'.format(args.out_prefix), cmd=' '.join(sys.argv))
+    tre_finder.output_bed(variants, f'{args.out_prefix}.bed')
+    tre_finder.output_tsv(
+        variants, f'{args.out_prefix}.tsv', cmd=' '.join(sys.argv)
+    )
 
 if __name__ == '__main__':
     main()

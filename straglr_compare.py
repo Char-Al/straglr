@@ -43,7 +43,7 @@ def parse_straglr_tsv(tsv, use_size=True, skip_chroms=None):
                 ref_size = '{:.1f}'.format(ref_size / len(cols[3]))
             locus.append(str(ref_size))
             locus = tuple(locus)
-            if not locus in alleles:
+            if locus not in alleles:
                 alleles[locus] = defaultdict(list)
             allele = cols[-1]
             if allele == '-':
@@ -116,9 +116,9 @@ def vs_each_parent(proband_bed, parent_bed, pval_cutoff, min_expansion=100, min_
             for j in range(-3, 0, 2):
                 if parent_cols[j] == '-':
                     continue
-               
+
                 parent_allele = float(parent_cols[j-1])
-                if not parent_allele in parent_alleles:
+                if parent_allele not in parent_alleles:
                     parent_alleles.append(parent_allele)
                 parent_calls = list(map(float, parent_cols[j].split(',')))
 
@@ -134,9 +134,9 @@ def vs_each_parent(proband_bed, parent_bed, pval_cutoff, min_expansion=100, min_
                 expanded_alleles.append(proband_allele)
                 supports[proband_allele] = len(proband_calls)
                 pvals.append(','.join(parent_pvals))
-            #else:
-                #print('not_expanded', locus, proband_allele, proband_calls, parent_cols)
-            
+                    #else:
+                        #print('not_expanded', locus, proband_allele, proband_calls, parent_cols)
+
         if expanded_alleles:
             expanded_loci[locus] = expanded_alleles, [','.join(list(map(str, parent_alleles)))], ';'.join(pvals), supports
 
@@ -198,8 +198,7 @@ def parse_args():
     parser.add_argument("--min_support", type=int, default=0, help="minimum support")
     parser.add_argument("--skip_chroms", type=str, nargs='+', help="skip chromosomes")
     parser.add_argument("--pval_cutoff", type=float, default=0.001,  help="p-value cutoff for testing T-test hypothesis")
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 def main():
     args = parse_args()
